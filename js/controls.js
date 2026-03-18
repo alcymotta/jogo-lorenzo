@@ -84,8 +84,8 @@ class ControlSystem {
         }
 
         // 1. A/D giram o corpo do player diretamente
-        if (this.keysPressed.a) this.player.rotation.y += this.turnSpeed;
-        if (this.keysPressed.d) this.player.rotation.y -= this.turnSpeed;
+        if (this.keysPressed.a) this.player.rotation.y -= this.turnSpeed;
+        if (this.keysPressed.d) this.player.rotation.y += this.turnSpeed;
         this.player.bodyGroup.rotation.y = this.player.rotation.y;
 
         // 2. W/S movem no eixo do corpo (forward = onde o nariz aponta)
@@ -97,7 +97,7 @@ class ControlSystem {
         forwardInput  += -this.joystickInput.z;
         const joyTurn  =  this.joystickInput.x;
         if (joyTurn !== 0) {
-            this.player.rotation.y -= joyTurn * this.turnSpeed;
+            this.player.rotation.y += joyTurn * this.turnSpeed;
             this.player.bodyGroup.rotation.y = this.player.rotation.y;
         }
 
