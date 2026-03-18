@@ -46,94 +46,126 @@ class Player {
      * Criar modelo 3D do personagem
      */
     createCharacter() {
+        this.armsModel = [];
+        this.legsModel = [];
+
         // Grupo principal do jogador
         this.bodyGroup = new THREE.Group();
         this.bodyGroup.position.set(this.position.x, this.position.y, this.position.z);
         this.scene.add(this.bodyGroup);
-        
-        // Cabeça (esfera)
-        const headGeometry = new THREE.SphereGeometry(0.4, 8, 8);
-        const headMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xFFB347,
-            flatShading: true
-        });
+
+        const skinMaterial = new THREE.MeshPhongMaterial({ color: 0xFFB347, flatShading: true });
+        const shirtMaterial = new THREE.MeshPhongMaterial({ color: 0xF4A460, flatShading: true });
+        const pantsMaterial = new THREE.MeshPhongMaterial({ color: 0x3A5F8A, flatShading: true });
+        const shoeMaterial = new THREE.MeshPhongMaterial({ color: 0x2E2E2E, flatShading: true });
+
+        // Cabeca (humanoide low-poly)
+        const headGeometry = new THREE.BoxGeometry(0.55, 0.6, 0.5);
+        const headMaterial = skinMaterial;
         this.headModel = new THREE.Mesh(headGeometry, headMaterial);
-        this.headModel.position.y = 0.6;
+        this.headModel.position.y = 0.72;
         this.headModel.castShadow = true;
         this.headModel.receiveShadow = true;
         this.bodyGroup.add(this.headModel);
-        
+
         // Olhos
-        const eyeGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+        const eyeGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.04);
         const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
-        
+
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.15, 0.8, 0.3);
+        leftEye.position.set(-0.13, 0.05, 0.24);
         this.headModel.add(leftEye);
-        
+
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.15, 0.8, 0.3);
+        rightEye.position.set(0.13, 0.05, 0.24);
         this.headModel.add(rightEye);
-        
-        // Corpo (cilindro)
-        const bodyGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.8, 8);
-        const bodyMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xF4A460,
-            flatShading: true
-        });
+
+        // Cabelo
+        const hair = new THREE.Mesh(
+            new THREE.BoxGeometry(0.58, 0.12, 0.52),
+            new THREE.MeshPhongMaterial({ color: 0x3B2A1E, flatShading: true })
+        );
+        hair.position.set(0, 0.37, 0);
+        this.headModel.add(hair);
+
+        // Corpo (tronco)
+        const bodyGeometry = new THREE.BoxGeometry(0.72, 0.9, 0.42);
+        const bodyMaterial = shirtMaterial;
         this.bodyModel = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        this.bodyModel.position.y = 0;
+        this.bodyModel.position.y = 0.05;
         this.bodyModel.castShadow = true;
         this.bodyModel.receiveShadow = true;
         this.bodyGroup.add(this.bodyModel);
-        
-        // Braços (cilindros)
-        const armGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 8);
-        const armMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xFFB347,
-            flatShading: true
-        });
-        
+
+        // Faixa da camisa para dar mais detalhe visual
+        const chestStripe = new THREE.Mesh(
+            new THREE.BoxGeometry(0.74, 0.18, 0.44),
+            new THREE.MeshPhongMaterial({ color: 0xE08A4B, flatShading: true })
+        );
+        chestStripe.position.set(0, 0.2, 0.01);
+        this.bodyGroup.add(chestStripe);
+
+        // Bracos
+        const armGeometry = new THREE.CylinderGeometry(0.11, 0.11, 0.75, 8);
+        const armMaterial = skinMaterial;
+
         const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-        leftArm.position.set(-0.5, 0.2, 0);
+        leftArm.position.set(-0.52, 0.02, 0);
         leftArm.castShadow = true;
         this.bodyGroup.add(leftArm);
         this.armsModel.push(leftArm);
-        
+
         const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-        rightArm.position.set(0.5, 0.2, 0);
+        rightArm.position.set(0.52, 0.02, 0);
         rightArm.castShadow = true;
         this.bodyGroup.add(rightArm);
         this.armsModel.push(rightArm);
-        
-        // Pernas (cilindros)
-        const legGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 8);
-        const legMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xA0755F,
-            flatShading: true
-        });
-        
+
+        // Maos
+        const handGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+        const leftHand = new THREE.Mesh(handGeometry, armMaterial);
+        leftHand.position.set(-0.52, -0.36, 0.08);
+        leftHand.castShadow = true;
+        this.bodyGroup.add(leftHand);
+
+        const rightHand = new THREE.Mesh(handGeometry, armMaterial);
+        rightHand.position.set(0.52, -0.36, 0.08);
+        rightHand.castShadow = true;
+        this.bodyGroup.add(rightHand);
+
+        // Pernas
+        const legGeometry = new THREE.CylinderGeometry(0.13, 0.13, 0.82, 8);
+        const legMaterial = pantsMaterial;
+
         const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-        leftLeg.position.set(-0.25, -0.6, 0);
+        leftLeg.position.set(-0.2, -0.66, 0);
         leftLeg.castShadow = true;
         this.bodyGroup.add(leftLeg);
         this.legsModel.push(leftLeg);
-        
+
         const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-        rightLeg.position.set(0.25, -0.6, 0);
+        rightLeg.position.set(0.2, -0.66, 0);
         rightLeg.castShadow = true;
         this.bodyGroup.add(rightLeg);
         this.legsModel.push(rightLeg);
-        
-        // Cauda (simples)
-        const tailGeometry = new THREE.ConeGeometry(0.1, 0.5, 8);
-        const tailMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0xA0755F,
-            flatShading: true
-        });
-        this.tailModel = new THREE.Mesh(tailGeometry, tailMaterial);
-        this.tailModel.position.set(0, -0.2, -0.5);
-        this.tailModel.rotation.z = Math.PI / 2;
+
+        // Pes
+        const footGeometry = new THREE.BoxGeometry(0.24, 0.12, 0.36);
+        const leftFoot = new THREE.Mesh(footGeometry, shoeMaterial);
+        leftFoot.position.set(-0.2, -1.1, 0.1);
+        leftFoot.castShadow = true;
+        this.bodyGroup.add(leftFoot);
+
+        const rightFoot = new THREE.Mesh(footGeometry, shoeMaterial);
+        rightFoot.position.set(0.2, -1.1, 0.1);
+        rightFoot.castShadow = true;
+        this.bodyGroup.add(rightFoot);
+
+        // Acessorio nas costas (mantem compatibilidade com animacao existente)
+        const backpackGeometry = new THREE.BoxGeometry(0.28, 0.4, 0.14);
+        const backpackMaterial = new THREE.MeshPhongMaterial({ color: 0x5A3A2A, flatShading: true });
+        this.tailModel = new THREE.Mesh(backpackGeometry, backpackMaterial);
+        this.tailModel.position.set(0, 0.04, -0.3);
         this.tailModel.castShadow = true;
         this.bodyGroup.add(this.tailModel);
     }
@@ -255,9 +287,14 @@ class Player {
      * Animar cauda
      */
     animateTail() {
+        if (!this.tailModel) return;
+
         const time = Date.now() * 0.003;
-        this.tailModel.rotation.x = Math.sin(time) * 0.2;
-        this.tailModel.rotation.z = Math.PI / 2 + Math.sin(time * 0.8) * 0.1;
+        const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
+        const sway = speed > 0.01 ? 0.08 : 0.03;
+
+        this.tailModel.rotation.x = Math.sin(time * 0.7) * 0.04;
+        this.tailModel.rotation.y = Math.sin(time) * sway;
     }
 
     /**

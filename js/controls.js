@@ -46,17 +46,25 @@ class ControlSystem {
     }
 
     onKeyDown(event) {
+        const key = (event.key || '').toLowerCase();
+        const isSpace = event.code === 'Space' || key === ' ' || key === 'space' || key === 'spacebar';
+
         if (this._chatFocused()) {
             if (event.key === 'Escape') document.activeElement.blur();
             return;
         }
-        const key = event.key.toLowerCase();
+
+        if (isSpace) {
+            event.preventDefault();
+            this.player.jump();
+            return;
+        }
+
         switch (key) {
             case 'w': this.keysPressed.w = true; event.preventDefault(); break;
             case 'a': this.keysPressed.a = true; event.preventDefault(); break;
             case 's': this.keysPressed.s = true; event.preventDefault(); break;
             case 'd': this.keysPressed.d = true; event.preventDefault(); break;
-            case ' ': event.preventDefault(); this.player.jump(); break;
             case 'shift': this.keysPressed.shift = true; break;
             case 'c': event.preventDefault(); document.getElementById('codeInput').focus(); break;
         }

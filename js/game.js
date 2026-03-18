@@ -175,10 +175,6 @@ class GameEngine {
      * Configurar listeners de eventos
      */
     setupEventListeners() {
-        // Teclas
-        document.addEventListener('keydown', (e) => this.controls.onKeyDown(e));
-        document.addEventListener('keyup', (e) => this.controls.onKeyUp(e));
-        
         // Chat
         document.getElementById('codeBtn').addEventListener('click', () => {
             this.chatSystem.sendCode();
@@ -227,9 +223,13 @@ class GameEngine {
             this.setupJoystick();
             
             // Botão de pulo
-            document.getElementById('jumpBtnMobile').addEventListener('click', () => {
+            const jumpBtn = document.getElementById('jumpBtnMobile');
+            const doJump = (e) => {
+                if (e) e.preventDefault();
                 this.player.jump();
-            });
+            };
+            jumpBtn.addEventListener('click', doJump);
+            jumpBtn.addEventListener('touchstart', doJump, { passive: false });
         }
     }
 
@@ -302,6 +302,7 @@ class GameEngine {
             this.player.playerName = name;
             document.getElementById('playerName').textContent = name;
             document.getElementById('playerNameContainer').classList.add('hidden');
+            input.blur();
             this.chatSystem.addMessage(`${name} entrou no jogo!`, 'system');
         } else {
             alert('Digite um nome válido!');
