@@ -362,8 +362,8 @@ class GameEngine {
         // Velocidade máxima de queda
         if (p.velocity.y < -0.45) p.velocity.y = -0.45;
 
-        // Colisão com o chão
-        if (p.position.y <= 0.5) {
+        // Colisão com o chão (somente quando está caindo/parado verticalmente)
+        if (p.position.y <= 0.5 && p.velocity.y <= 0) {
             p.position.y = 0.5;
             p.velocity.y = 0;
             p.isJumping = false;
