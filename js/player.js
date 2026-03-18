@@ -167,35 +167,17 @@ class Player {
     }
 
     /**
-     * Mover jogador em direção (relativa ao mundo, já rotacionada pelo controls)
-     * @param {Object} direction - { x, z } normalizado
-     * @param {boolean} running  - true quando Shift pressionado
+     * Mover jogador — recebe vetor já no espaço mundo (calculado pelo controls).
+     * A rotação do corpo já foi aplicada antes desta chamada.
+     * @param {{ x: number, z: number }} direction
+     * @param {boolean} running
      */
     move(direction, running = false) {
         this.isRunning = running;
-        const len = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
-
-        if (len > 0.01) {
-            const speed = this.moveSpeed * (running ? this.runMultiplier : 1);
-            // Lerp suave de velocidade (aceleração) — 0.25 = snappy mas não instantâneo
-            const accel = 0.25;
-            this.velocity.x += (direction.x * speed - this.velocity.x) * accel;
-            this.velocity.z += (direction.z * speed - this.velocity.z) * accel;
-
-            // Rotacionar personagem para a direção de movimento
-            const targetRotation = Math.atan2(direction.x, direction.z);
-            let diff = targetRotation - this.rotation.y;
-            while (diff >  Math.PI) diff -= 2 * Math.PI;
-            while (diff < -Math.PI) diff += 2 * Math.PI;
-            this.rotation.y += diff * 0.15;
-            this.bodyGroup.rotation.y = this.rotation.y;
-        } else {
-            // Desaceleração suave
-            this.velocity.x *= this.deceleration;
-            this.velocity.z *= this.deceleration;
-            if (Math.abs(this.velocity.x) < 0.001) this.velocity.x = 0;
-            if (Math.abs(this.velocity.z) < 0.001) this.velocity.z = 0;
-        }
+        const speed = this.moveSpeed * (running ? this.runMultiplier : 1);
+        const accel = 0.20; // aceleração suave
+        this.velocity.x += (direction.x * speed - this.velocity.x) * accel;
+        this.velocity.z += (direction.z * speed - this.velocity.z) * accel;
     }
 
     /**
@@ -411,10 +393,13 @@ class Player {
     }
 
     /**
-     * Parar movimento
+     * Parar movimento — desaceleração suave
      */
     stopMovement() {
-        this.velocity.x = 0;
-        this.velocity.z = 0;
+        this.isRunning = false;
+        this.velocity.x *= this.deceleration;
+        this.velocity.z *= this.deceleration;
+        if (Math.abs(this.velocity.x) < 0.001) this.velocity.x = 0;
+        if (Math.abs(this.velocity.z) < 0.001) this.velocity.z = 0;
     }
 }

@@ -1,6 +1,10 @@
 /**
- * controls.js - Sistema de Controles (Teclado e Touch)
- * Movimento relativo à câmera, suporte a correr, chat guard e joystick mobile.
+ * controls.js - Sistema de Controles
+ *
+ * ARQUITETURA:
+ *   W/S  → move para frente/trás no eixo que o CORPO do player aponta
+ *   A/D  → gira o CORPO do player (sem depender da câmera)
+ *   Câmera segue o corpo com lerp suave — ZERO dependência circular.
  */
 
 class ControlSystem {
@@ -13,16 +17,17 @@ class ControlSystem {
             a: false,
             s: false,
             d: false,
-            space: false,
             shift: false
         };
 
         this.joystickInput = { x: 0, z: 0 };
 
+        // Velocidade de giro do corpo (radianos por frame a 60fps)
+        this.turnSpeed = 0.045;
+
         this.setupInputListeners();
     }
 
-    /** Verifica se o chat está em foco (bloquear WASD) */
     _chatFocused() {
         const el = document.activeElement;
         return el && (el.id === 'codeInput' || el.id === 'playerNameInput');
@@ -41,27 +46,19 @@ class ControlSystem {
     }
 
     onKeyDown(event) {
-        // Quando chat está focado só capturar Escape
         if (this._chatFocused()) {
             if (event.key === 'Escape') document.activeElement.blur();
             return;
         }
-
         const key = event.key.toLowerCase();
         switch (key) {
             case 'w': this.keysPressed.w = true; event.preventDefault(); break;
             case 'a': this.keysPressed.a = true; event.preventDefault(); break;
             case 's': this.keysPressed.s = true; event.preventDefault(); break;
             case 'd': this.keysPressed.d = true; event.preventDefault(); break;
-            case ' ':
-                event.preventDefault();
-                this.player.jump();
-                break;
+            case ' ': event.preventDefault(); this.player.jump(); break;
             case 'shift': this.keysPressed.shift = true; break;
-            case 'c':
-                event.preventDefault();
-                document.getElementById('codeInput').focus();
-                break;
+            case 'c': event.preventDefault(); document.getElementById('codeInput').focus(); break;
         }
     }
 
@@ -77,8 +74,8 @@ class ControlSystem {
     }
 
     /**
-     * Chamado a cada frame pelo game loop.
-     * Calcula input, rotaciona pelo ângulo da câmera e envia ao player.
+     * Chamado a cada frame. Gira o corpo com A/D e move com W/S.
+     * Não lê nem escreve o ângulo da câmera.
      */
     update() {
         if (this._chatFocused()) {
@@ -86,42 +83,45 @@ class ControlSystem {
             return;
         }
 
-        // --- Ler input bruto ---
-        let ix = 0, iz = 0;
-        if (this.keysPressed.w) iz -= 1;
-        if (this.keysPressed.s) iz += 1;
-        if (this.keysPressed.a) ix -= 1;
-        if (this.keysPressed.d) ix += 1;
+        // 1. A/D giram o corpo do player diretamente
+        if (this.keysPressed.a) this.player.rotation.y += this.turnSpeed;
+        if (this.keysPressed.d) this.player.rotation.y -= this.turnSpeed;
+        this.player.bodyGroup.rotation.y = this.player.rotation.y;
 
-        // Joystick mobile
-        ix += this.joystickInput.x;
-        iz += this.joystickInput.z;
+        // 2. W/S movem no eixo do corpo (forward = onde o nariz aponta)
+        let forwardInput = 0;
+        if (this.keysPressed.w) forwardInput += 1;
+        if (this.keysPressed.s) forwardInput -= 1;
 
-        // Normalizar diagonal
-        const len = Math.sqrt(ix * ix + iz * iz);
-        if (len > 1) { ix /= len; iz /= len; }
-
-        // --- Rotacionar pelo ângulo da câmera ---
-        const camAngle = this.engine ? this.engine.gameCamera.angle : 0;
-        const sin = Math.sin(camAngle);
-        const cos = Math.cos(camAngle);
-        const wx = ix * cos + iz * sin;
-        const wz = -ix * sin + iz * cos;
+        // Joystick mobile: iz equivale ao W/S, ix ao A/D
+        forwardInput  += -this.joystickInput.z;
+        const joyTurn  =  this.joystickInput.x;
+        if (joyTurn !== 0) {
+            this.player.rotation.y -= joyTurn * this.turnSpeed;
+            this.player.bodyGroup.rotation.y = this.player.rotation.y;
+        }
 
         const isRunning = this.keysPressed.shift;
 
-        if (this.player.isFlying) {
-            const flyDir = { x: wx, y: 0, z: wz };
-            if (this.keysPressed.space) flyDir.y = 1;
-            if (this.keysPressed.shift) flyDir.y = -1;
-            this.player.flyInDirection(flyDir);
+        if (Math.abs(forwardInput) > 0.01) {
+            // Vetor forward a partir da rotação atual do corpo
+            const ry = this.player.rotation.y;
+            const dir = {
+                x:  Math.sin(ry) * forwardInput,
+                z:  Math.cos(ry) * forwardInput
+            };
+            if (this.player.isFlying) {
+                this.player.flyInDirection({ x: dir.x, y: 0, z: dir.z });
+            } else {
+                this.player.move(dir, isRunning);
+            }
         } else {
-            this.player.move({ x: wx, z: wz }, isRunning);
+            this.player.stopMovement();
         }
     }
 
     stop() {
-        this.keysPressed = { w: false, a: false, s: false, d: false, space: false, shift: false };
+        this.keysPressed = { w: false, a: false, s: false, d: false, shift: false };
         this.joystickInput = { x: 0, z: 0 };
         this.player.stopMovement();
     }
