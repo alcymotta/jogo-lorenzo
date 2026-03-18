@@ -48,8 +48,8 @@ class NPC {
         this.model = new THREE.Group();
         this.scene.add(this.model);
         
-        // Corpo (cilindro horizontal)
-        const bodyGeometry = new THREE.CapsuleGeometry(0.8, 1.8, 8, 8);
+        // Corpo (cilindro)
+        const bodyGeometry = new THREE.CylinderGeometry(0.8, 0.8, 1.8, 8);
         const bodyMaterial = new THREE.MeshPhongMaterial({
             color: 0x8B6F47, // Marrom de capivara
             flatShading: true

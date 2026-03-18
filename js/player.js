@@ -72,8 +72,8 @@ class Player {
         rightEye.position.set(0.15, 0.8, 0.3);
         this.headModel.add(rightEye);
         
-        // Corpo (cápsula)
-        const bodyGeometry = new THREE.CapsuleGeometry(0.35, 0.8, 8, 8);
+        // Corpo (cilindro)
+        const bodyGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.8, 8);
         const bodyMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xF4A460,
             flatShading: true

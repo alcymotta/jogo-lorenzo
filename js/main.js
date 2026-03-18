@@ -14,15 +14,24 @@ let isGameRunning = false;
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 Iniciando Ilha de Capibara...');
     
-    // Criar engine do jogo
-    gameEngine = new GameEngine();
-    isGameRunning = true;
-    
-    // Setup inicial
-    setupGameUI();
-    setupGameEvents();
-    
-    console.log('✅ Jogo pronto para jogar!');
+    try {
+        // Criar engine do jogo
+        gameEngine = new GameEngine();
+        isGameRunning = true;
+        
+        // Setup inicial
+        setupGameUI();
+        setupGameEvents();
+        
+        console.log('✅ Jogo pronto para jogar!');
+    } catch (err) {
+        console.error('❌ Erro ao iniciar o jogo:', err);
+        // Mostrar erro visível na tela para debug
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#c00;color:#fff;padding:20px;border-radius:10px;font-family:monospace;font-size:14px;z-index:9999;max-width:80%;word-break:break-all;';
+        errDiv.innerHTML = '<strong>❌ Erro ao carregar o jogo:</strong><br>' + err.message + '<br><br><small>Abra o Console (F12) para mais detalhes.</small>';
+        document.body.appendChild(errDiv);
+    }
 });
 
 /**
