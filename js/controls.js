@@ -107,8 +107,8 @@ class ControlSystem {
             // Vetor forward a partir da rotação atual do corpo
             const ry = this.player.rotation.y;
             const dir = {
-                 x: -Math.sin(ry) * forwardInput,
-                 z: -Math.cos(ry) * forwardInput
+                  x: Math.sin(ry) * forwardInput,
+                  z: Math.cos(ry) * forwardInput
             };
             if (this.player.isFlying) {
                 this.player.flyInDirection({ x: dir.x, y: 0, z: dir.z });
