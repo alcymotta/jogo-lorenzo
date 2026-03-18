@@ -41,11 +41,26 @@ function setupGameUI() {
     // Mostrar controles baseado no dispositivo
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
     if (isMobile) {
         console.log('📱 Dispositivo mobile detectado');
         // Controles mobile já iniciados em game.js
+        if (fullscreenBtn) fullscreenBtn.style.display = 'inline-block';
     } else {
         console.log('🖥️ Dispositivo desktop detectado');
+        if (fullscreenBtn) fullscreenBtn.style.display = 'none';
+    }
+
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', () => toggleFullScreen());
+        const refreshFullscreenLabel = () => {
+            const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            fullscreenBtn.textContent = isFullscreen ? '🡼 Sair da Tela Cheia' : '⛶ Tela Cheia';
+        };
+        document.addEventListener('fullscreenchange', refreshFullscreenLabel);
+        document.addEventListener('webkitfullscreenchange', refreshFullscreenLabel);
+        refreshFullscreenLabel();
     }
     
     // Focar input de nome
@@ -130,13 +145,25 @@ function restartGame() {
  */
 function toggleFullScreen() {
     const canvas = document.getElementById('gameCanvas');
-    
-    if (!document.fullscreenElement) {
-        canvas.requestFullscreen().catch(err => {
-            console.warn('Não foi possível ativar fullscreen:', err);
-        });
+    const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+    if (!isFullscreen) {
+        const enterFs = canvas.requestFullscreen || canvas.webkitRequestFullscreen;
+        if (enterFs) {
+            try {
+                const maybePromise = enterFs.call(canvas);
+                if (maybePromise && typeof maybePromise.catch === 'function') {
+                    maybePromise.catch(err => {
+                        console.warn('Não foi possível ativar fullscreen:', err);
+                    });
+                }
+            } catch (err) {
+                console.warn('Não foi possível ativar fullscreen:', err);
+            }
+        }
     } else {
-        document.exitFullscreen();
+        const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exitFs) exitFs.call(document);
     }
 }
 

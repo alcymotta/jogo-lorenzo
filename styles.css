@@ -298,6 +298,14 @@ body {
     transform: scale(0.95);
 }
 
+#fullscreenBtn {
+    background: rgba(0, 200, 100, 0.85);
+}
+
+#fullscreenBtn:hover {
+    background: rgba(0, 230, 120, 1);
+}
+
 #flyBtn {
     display: none;
 }
