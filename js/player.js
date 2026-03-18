@@ -20,10 +20,13 @@ class Player {
         this.isJumping = false;
         this.isFlying = false;
         this.isMortiing = false;
+        this.isRunning = false;
         this.currentTransform = 'normal'; // normal, nube, c00lkidd, capybara, guarda
-        this.moveSpeed = 0.15;
-        this.jumpForce = 0.35;
-        this.flySpeed = 0.2;
+        this.moveSpeed = 0.25;       // aumentado de 0.15
+        this.runMultiplier = 1.8;    // Shift = correr
+        this.jumpForce = 0.50;       // aumentado de 0.35
+        this.flySpeed = 0.28;
+        this.deceleration = 0.80;    // fator de desaceleração (0-1, menor = mais deslizamento)
         
         // Modelos 3D
         this.bodyGroup = null;
@@ -164,27 +167,34 @@ class Player {
     }
 
     /**
-     * Mover jogador em direção
+     * Mover jogador em direção (relativa ao mundo, já rotacionada pelo controls)
+     * @param {Object} direction - { x, z } normalizado
+     * @param {boolean} running  - true quando Shift pressionado
      */
-    move(direction) {
-        // Normalizar direção
+    move(direction, running = false) {
+        this.isRunning = running;
         const len = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
-        if (len > 0) {
-            direction.x /= len;
-            direction.z /= len;
-        }
-        
-        // Aplicar velocidade
-        const speed = this.isFlying ? this.flySpeed : this.moveSpeed;
-        this.velocity.x = direction.x * speed;
-        this.velocity.z = direction.z * speed;
-        
-        // Rotacionar para direção
-        if (len > 0) {
+
+        if (len > 0.01) {
+            const speed = this.moveSpeed * (running ? this.runMultiplier : 1);
+            // Lerp suave de velocidade (aceleração) — 0.25 = snappy mas não instantâneo
+            const accel = 0.25;
+            this.velocity.x += (direction.x * speed - this.velocity.x) * accel;
+            this.velocity.z += (direction.z * speed - this.velocity.z) * accel;
+
+            // Rotacionar personagem para a direção de movimento
             const targetRotation = Math.atan2(direction.x, direction.z);
-            // Suavizar rotação
-            this.rotation.y += (targetRotation - this.rotation.y) * 0.1;
+            let diff = targetRotation - this.rotation.y;
+            while (diff >  Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            this.rotation.y += diff * 0.15;
             this.bodyGroup.rotation.y = this.rotation.y;
+        } else {
+            // Desaceleração suave
+            this.velocity.x *= this.deceleration;
+            this.velocity.z *= this.deceleration;
+            if (Math.abs(this.velocity.x) < 0.001) this.velocity.x = 0;
+            if (Math.abs(this.velocity.z) < 0.001) this.velocity.z = 0;
         }
     }
 
@@ -232,18 +242,30 @@ class Player {
     }
 
     /**
-     * Animar pernas baseado em movimento
+     * Animar pernas baseado em movimento (mais rápido ao correr)
      */
     animateLegs() {
-        const moveSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
-        const time = Date.now() * 0.005;
-        
-        if (moveSpeed > 0.01) {
-            this.legsModel[0].rotation.z = Math.sin(time * 3) * 0.3;
-            this.legsModel[1].rotation.z = Math.sin(time * 3 + Math.PI) * 0.3;
+        const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
+        const time = Date.now() * 0.001;
+
+        if (speed > 0.01) {
+            // Frequência e amplitude maiores ao correr
+            const freq = this.isRunning ? 12 : 7;
+            const amp  = this.isRunning ? 0.5 : 0.35;
+            this.legsModel[0].rotation.z = Math.sin(time * freq) * amp;
+            this.legsModel[1].rotation.z = Math.sin(time * freq + Math.PI) * amp;
+            // Balançar braços
+            if (this.armsModel.length >= 2) {
+                this.armsModel[0].rotation.z = Math.sin(time * freq + Math.PI) * amp * 0.6;
+                this.armsModel[1].rotation.z = Math.sin(time * freq) * amp * 0.6;
+            }
         } else {
-            this.legsModel[0].rotation.z *= 0.9;
-            this.legsModel[1].rotation.z *= 0.9;
+            this.legsModel[0].rotation.z *= 0.85;
+            this.legsModel[1].rotation.z *= 0.85;
+            if (this.armsModel.length >= 2) {
+                this.armsModel[0].rotation.z *= 0.85;
+                this.armsModel[1].rotation.z *= 0.85;
+            }
         }
     }
 

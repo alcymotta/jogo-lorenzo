@@ -17,8 +17,9 @@ class GameEngine {
         this.isRunning = false;
         
         // Configurações do jogo
-        this.gravity = -0.015;
-        this.gameOwner = 'Lorenzo'; // Dono do jogo para código especial
+        this.gravity = -0.025;       // levemente maior para pulo mais sólido
+        this.gameOwner = 'Lorenzo';
+        this.clock = new THREE.Clock(); // para delta time
         this.init();
     }
 
@@ -312,45 +313,61 @@ class GameEngine {
      */
     animate() {
         requestAnimationFrame(() => this.animate());
-        
+
         if (!this.isRunning) return;
-        
+
+        const delta = Math.min(this.clock.getDelta(), 0.05); // cap em 50ms
+
+        // Atualizar controles a cada frame (movimento relativo à câmera)
+        this.controls.update();
+
         // Atualizar física
-        this.updatePhysics();
-        
+        this.updatePhysics(delta);
+
         // Atualizar jogador
         this.player.update();
-        
+
         // Atualizar câmera
         this.gameCamera.update();
-        
+
         // Atualizar NPCs
         this.npcs.forEach(npc => npc.update());
-        
+
         // Renderizar
         this.renderer.render(this.scene, this.camera);
     }
 
     /**
-     * Atualizar física simples
+     * Atualizar física com delta time
      */
-    updatePhysics() {
-        // Aplicar gravidade ao jogador
-        if (!this.player.isFlying) {
-            this.player.velocity.y += this.gravity;
+    updatePhysics(delta = 0.016) {
+        const p = this.player;
+        const targetFPS = 60;
+        const scale = delta * targetFPS; // normalizar para 60fps
+
+        // Gravidade
+        if (!p.isFlying) {
+            p.velocity.y += this.gravity * scale;
         }
-        
-        // Limitar velocidade máxima
-        const maxFallSpeed = 0.3;
-        if (this.player.velocity.y < -maxFallSpeed) {
-            this.player.velocity.y = -maxFallSpeed;
+
+        // Coyote time: se acabou de sair do chão, ainda pode pular por 120ms
+        if (p.position.y > 0.55 && !p.isJumping && p.velocity.y < 0) {
+            if (!p._coyoteTimer) p._coyoteTimer = 0;
+            p._coyoteTimer += delta * 1000;
+            if (p._coyoteTimer > 120) p.isJumping = true;
+        } else if (p.position.y <= 0.55) {
+            p._coyoteTimer = 0;
         }
-        
-        // Detectar colisão com o chão
-        if (this.player.position.y <= 0.5) {
-            this.player.position.y = 0.5;
-            this.player.velocity.y = 0;
-            this.player.isJumping = false;
+
+        // Velocidade máxima de queda
+        if (p.velocity.y < -0.45) p.velocity.y = -0.45;
+
+        // Colisão com o chão
+        if (p.position.y <= 0.5) {
+            p.position.y = 0.5;
+            p.velocity.y = 0;
+            p.isJumping = false;
+            p._coyoteTimer = 0;
         }
     }
 

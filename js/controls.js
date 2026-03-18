@@ -1,191 +1,127 @@
 /**
  * controls.js - Sistema de Controles (Teclado e Touch)
- * Gerencia entrada do usuário e movimentação
+ * Movimento relativo à câmera, suporte a correr, chat guard e joystick mobile.
  */
 
 class ControlSystem {
     constructor(player) {
         this.player = player;
         this.engine = null;
-        
-        // Estado das teclas
+
         this.keysPressed = {
             w: false,
             a: false,
             s: false,
             d: false,
             space: false,
-            shift: false,
-            c: false
+            shift: false
         };
-        
-        // Joystick virtual (mobile)
+
         this.joystickInput = { x: 0, z: 0 };
-        
-        // Velocidades
-        this.moveDirection = { x: 0, z: 0 };
-        this.acceleration = 0.05;
-        this.deceleration = 0.15;
-        
+
         this.setupInputListeners();
     }
 
-    /**
-     * Configurar listeners de entrada
-     */
-    setupInputListeners() {
-        // Teclado - Key Down
-        document.addEventListener('keydown', (event) => this.onKeyDown(event));
-        
-        // Teclado - Key Up
-        document.addEventListener('keyup', (event) => this.onKeyUp(event));
-        
-        // Mouse - Scroll para zoom
-        document.addEventListener('wheel', (event) => {
-            if (this.engine && this.engine.gameCamera) {
-                event.preventDefault();
-                const direction = event.deltaY > 0 ? 0.5 : -0.5;
-                this.engine.gameCamera.zoom(direction);
-            }
-        }, { passive: false });
-        
-        // Mouse - Movimento para rotação (apenas em fullscreen ou quando travado)
-        document.addEventListener('mousemove', (event) => {
-            if (this.engine && this.engine.gameCamera) {
-                // Simples: câmera segue o mouse um pouco
-                // Pode ser expandido para mouse lock later
-            }
-        });
+    /** Verifica se o chat está em foco (bloquear WASD) */
+    _chatFocused() {
+        const el = document.activeElement;
+        return el && (el.id === 'codeInput' || el.id === 'playerNameInput');
     }
 
-    /**
-     * Handle tecla pressionada
-     */
+    setupInputListeners() {
+        document.addEventListener('keydown', (e) => this.onKeyDown(e));
+        document.addEventListener('keyup',   (e) => this.onKeyUp(e));
+
+        document.addEventListener('wheel', (e) => {
+            if (this.engine && this.engine.gameCamera) {
+                e.preventDefault();
+                this.engine.gameCamera.zoom(e.deltaY > 0 ? 0.5 : -0.5);
+            }
+        }, { passive: false });
+    }
+
     onKeyDown(event) {
+        // Quando chat está focado só capturar Escape
+        if (this._chatFocused()) {
+            if (event.key === 'Escape') document.activeElement.blur();
+            return;
+        }
+
         const key = event.key.toLowerCase();
-        
-        switch(key) {
-            case 'w':
-                this.keysPressed.w = true;
-                event.preventDefault();
-                break;
-            case 'a':
-                this.keysPressed.a = true;
-                event.preventDefault();
-                break;
-            case 's':
-                this.keysPressed.s = true;
-                event.preventDefault();
-                break;
-            case 'd':
-                this.keysPressed.d = true;
-                event.preventDefault();
-                break;
+        switch (key) {
+            case 'w': this.keysPressed.w = true; event.preventDefault(); break;
+            case 'a': this.keysPressed.a = true; event.preventDefault(); break;
+            case 's': this.keysPressed.s = true; event.preventDefault(); break;
+            case 'd': this.keysPressed.d = true; event.preventDefault(); break;
             case ' ':
                 event.preventDefault();
                 this.player.jump();
                 break;
-            case 'shift':
-                this.keysPressed.shift = true;
-                break;
+            case 'shift': this.keysPressed.shift = true; break;
             case 'c':
-                // Focar no chat
                 event.preventDefault();
                 document.getElementById('codeInput').focus();
                 break;
-            case ';':
-                // Código rápido para vôo (debug)
-                if (this.engine && this.engine.chatSystem) {
-                    this.engine.chatSystem.processCode(';fly');
-                }
-                break;
         }
-        
-        // Atualizar movimento
-        this.updateMovement();
     }
 
-    /**
-     * Handle tecla solta
-     */
     onKeyUp(event) {
         const key = event.key.toLowerCase();
-        
-        switch(key) {
-            case 'w':
-                this.keysPressed.w = false;
-                break;
-            case 'a':
-                this.keysPressed.a = false;
-                break;
-            case 's':
-                this.keysPressed.s = false;
-                break;
-            case 'd':
-                this.keysPressed.d = false;
-                break;
-            case 'shift':
-                this.keysPressed.shift = false;
-                break;
+        switch (key) {
+            case 'w': this.keysPressed.w = false; break;
+            case 'a': this.keysPressed.a = false; break;
+            case 's': this.keysPressed.s = false; break;
+            case 'd': this.keysPressed.d = false; break;
+            case 'shift': this.keysPressed.shift = false; break;
         }
-        
-        this.updateMovement();
     }
 
     /**
-     * Atualizar direção de movimento
+     * Chamado a cada frame pelo game loop.
+     * Calcula input, rotaciona pelo ângulo da câmera e envia ao player.
      */
-    updateMovement() {
-        const moveInput = { x: 0, z: 0 };
-        
-        // Input do teclado
-        if (this.keysPressed.w) moveInput.z -= 1; // Para frente
-        if (this.keysPressed.s) moveInput.z += 1; // Para trás
-        if (this.keysPressed.a) moveInput.x -= 1; // Para esquerda
-        if (this.keysPressed.d) moveInput.x += 1; // Para direita
-        
-        // Input do joystick (mobile)
-        if (this.joystickInput.x !== 0 || this.joystickInput.z !== 0) {
-            moveInput.x += this.joystickInput.x;
-            moveInput.z += this.joystickInput.z;
+    update() {
+        if (this._chatFocused()) {
+            this.player.stopMovement();
+            return;
         }
-        
-        // Normalizar entrada
-        const length = Math.sqrt(moveInput.x * moveInput.x + moveInput.z * moveInput.z);
-        if (length > 0) {
-            moveInput.x /= length;
-            moveInput.z /= length;
-        }
-        
-        // Aplicar movimento ao jogador
+
+        // --- Ler input bruto ---
+        let ix = 0, iz = 0;
+        if (this.keysPressed.w) iz -= 1;
+        if (this.keysPressed.s) iz += 1;
+        if (this.keysPressed.a) ix -= 1;
+        if (this.keysPressed.d) ix += 1;
+
+        // Joystick mobile
+        ix += this.joystickInput.x;
+        iz += this.joystickInput.z;
+
+        // Normalizar diagonal
+        const len = Math.sqrt(ix * ix + iz * iz);
+        if (len > 1) { ix /= len; iz /= len; }
+
+        // --- Rotacionar pelo ângulo da câmera ---
+        const camAngle = this.engine ? this.engine.gameCamera.angle : 0;
+        const sin = Math.sin(camAngle);
+        const cos = Math.cos(camAngle);
+        const wx = ix * cos + iz * sin;
+        const wz = -ix * sin + iz * cos;
+
+        const isRunning = this.keysPressed.shift;
+
         if (this.player.isFlying) {
-            // Vôo permite movimento livre em 3D
-            const flyDirection = { x: moveInput.x, y: 0, z: moveInput.z };
-            
-            // Teclas para cima/baixo ao voar
-            if (this.keysPressed.space) flyDirection.y = 1;
-            if (this.keysPressed.shift) flyDirection.y = -1;
-            
-            this.player.flyInDirection(flyDirection);
+            const flyDir = { x: wx, y: 0, z: wz };
+            if (this.keysPressed.space) flyDir.y = 1;
+            if (this.keysPressed.shift) flyDir.y = -1;
+            this.player.flyInDirection(flyDir);
         } else {
-            // Movimento normal
-            this.player.move(moveInput);
+            this.player.move({ x: wx, z: wz }, isRunning);
         }
     }
 
-    /**
-     * Parar todo movimento
-     */
     stop() {
-        this.keysPressed = {
-            w: false,
-            a: false,
-            s: false,
-            d: false,
-            space: false,
-            shift: false,
-            c: false
-        };
+        this.keysPressed = { w: false, a: false, s: false, d: false, space: false, shift: false };
         this.joystickInput = { x: 0, z: 0 };
         this.player.stopMovement();
     }

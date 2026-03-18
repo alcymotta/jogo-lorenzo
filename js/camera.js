@@ -1,95 +1,77 @@
 /**
  * camera.js - Câmera em Terceira Pessoa
- * Segue o jogador mantendo uma distância e ângulo agradáveis
+ * Câmera fixa atrás do personagem, segue direção de movimento automaticamente.
  */
 
 class ThirdPersonCamera {
     constructor(camera, player) {
         this.camera = camera;
         this.player = player;
-        
-        // Parâmetros da câmera
-        this.distance = 8; // Distância da câmera do jogador
-        this.height = 5; // Altura acima do jogador
-        this.angle = 0; // Ângulo horizontal em torno do jogador
-        this.targetAngle = 0;
-        
+
+        this.distance = 8;
+        this.height = 5;
+        this.angle = 0;          // ângulo atual (yaw) — em radianos
+        this._lastMoveAngle = 0; // último ângulo em que o player se movia
+
+        this.targetDistance = this.distance;
+        this.targetHeight = this.height;
+
         // Suavização
-        this.smoothing = 0.1;
-        this.targetDistance = this.distance;
-        this.targetHeight = this.height;
-        
-        // Limites
+        this.posSmoothing   = 0.12;  // quão rápido câmera segue posição
+        this.angleSmoothing = 0.06;  // quão suave gira atrás do player
+
+        // Limites de zoom
         this.minDistance = 3;
-        this.maxDistance = 15;
-        this.minHeight = 2;
-        this.maxHeight = 10;
-        
-        // Rotação com mouse (desktop)
-        this.isLocked = false;
+        this.maxDistance = 18;
+        this.minHeight   = 1.5;
+        this.maxHeight   = 12;
     }
 
-    /**
-     * Atualizar posição da câmera
-     */
     update() {
-        // Calcular posição alvo da câmera
-        const playerPos = this.player.position;
-        
-        // Aplicar suavização à distância e altura
-        this.distance += (this.targetDistance - this.distance) * this.smoothing;
-        this.height += (this.targetHeight - this.height) * this.smoothing;
-        
-        // Calcular nova posição da câmera
-        const cameraDistance = this.distance;
-        const cameraHeight = this.height;
-        
-        // Câmera sempre atrás do jogador
-        this.targetAngle = this.player.rotation.y;
-        this.angle += (this.targetAngle - this.angle) * this.smoothing;
-        
-        // Posição circular ao redor do jogador
-        const cameraX = playerPos.x + Math.sin(this.angle) * cameraDistance;
-        const cameraY = playerPos.y + cameraHeight;
-        const cameraZ = playerPos.z + Math.cos(this.angle) * cameraDistance;
-        
-        // Atualizar câmera
-        this.camera.position.set(cameraX, cameraY, cameraZ);
-        
-        // Olhar para o jogador (levemente acima da cabeça)
-        const lookAtY = playerPos.y + 0.5;
-        this.camera.lookAt(playerPos.x, lookAtY, playerPos.z);
+        const p = this.player;
+
+        // Detectar se player está se movendo
+        const hSpeed = Math.sqrt(p.velocity.x * p.velocity.x + p.velocity.z * p.velocity.z);
+        if (hSpeed > 0.01) {
+            // Câmera vai para atrás da direção de movimento
+            this._lastMoveAngle = Math.atan2(p.velocity.x, p.velocity.z);
+        }
+
+        // Lerp suave do ângulo
+        let angleDiff = this._lastMoveAngle - this.angle;
+        // Garantir caminho mais curto (wrap em -PI..PI)
+        while (angleDiff >  Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        this.angle += angleDiff * this.angleSmoothing;
+
+        // Lerp de distância e altura
+        this.distance += (this.targetDistance - this.distance) * this.posSmoothing;
+        this.height   += (this.targetHeight   - this.height)   * this.posSmoothing;
+
+        // Calcular posição da câmera
+        const tx = p.position.x + Math.sin(this.angle) * this.distance;
+        const tz = p.position.z + Math.cos(this.angle) * this.distance;
+
+        // Clamp de altura — câmera nunca desce abaixo de playerY + 1.5
+        const minCamY = p.position.y + 1.5;
+        const ty = Math.max(p.position.y + this.height, minCamY);
+
+        this.camera.position.set(tx, ty, tz);
+        this.camera.lookAt(p.position.x, p.position.y + 0.8, p.position.z);
     }
 
-    /**
-     * Zoom in/out com scroll
-     */
     zoom(direction) {
-        this.targetDistance += direction;
-        this.targetDistance = Math.max(this.minDistance, Math.min(this.maxDistance, this.targetDistance));
+        this.targetDistance = Math.max(this.minDistance,
+            Math.min(this.maxDistance, this.targetDistance + direction));
     }
 
-    /**
-     * Rotacionar câmera com mouse
-     */
-    rotateWithMouse(deltaX) {
-        this.targetAngle += deltaX * 0.005;
-    }
-
-    /**
-     * Elevar câmera
-     */
     elevate(direction) {
-        this.targetHeight += direction;
-        this.targetHeight = Math.max(this.minHeight, Math.min(this.maxHeight, this.targetHeight));
+        this.targetHeight = Math.max(this.minHeight,
+            Math.min(this.maxHeight, this.targetHeight + direction));
     }
 
-    /**
-     * Reset câmera para posição padrão
-     */
     reset() {
-        this.targetDistance = this.distance;
-        this.targetHeight = this.height;
-        this.targetAngle = 0;
+        this.targetDistance = 8;
+        this.targetHeight   = 5;
     }
 }
