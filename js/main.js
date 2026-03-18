@@ -52,6 +52,11 @@ function setupGameUI() {
     setTimeout(() => {
         document.getElementById('playerNameInput').focus();
     }, 100);
+
+        // Expor função de pulo para botão mobile
+        window._gameJump = () => {
+            if (gameEngine && gameEngine.player) gameEngine.player.jump();
+        };
 }
 
 /**

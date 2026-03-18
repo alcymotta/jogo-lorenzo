@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="screen-orientation" content="landscape">
     <title>Ilha de Capibara - 3D Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,6 +15,29 @@
 
     <!-- HUD - Interface do Jogo -->
     <div id="hud">
+            <!-- Overlay: Rotacionar para modo paisagem -->
+            <div id="rotateDeviceOverlay">
+                <div id="rotateDeviceMsg">
+                    📱 Gire o celular para jogar!
+                </div>
+            </div>
+
+            <!-- Painel de Códigos (esquerda) -->
+            <div id="commandList">
+                <div id="commandListHeader" onclick="document.getElementById('commandList').classList.toggle('collapsed')">
+                    🎮 Códigos <span>▼</span>
+                </div>
+                <div id="commandListBody">
+                    <div class="cmd-row"><span class="cmd-code">65395</span><span class="cmd-desc">Nube ☁️</span></div>
+                    <div class="cmd-row"><span class="cmd-code">0762</span><span class="cmd-desc">c00lkidd 😎</span></div>
+                    <div class="cmd-row"><span class="cmd-code">77</span><span class="cmd-desc">Capivara 🐹</span></div>
+                    <div class="cmd-row"><span class="cmd-code">888</span><span class="cmd-desc">Guarda 👮</span></div>
+                    <div class="cmd-row"><span class="cmd-code">;fly</span><span class="cmd-desc">Voar ✈️</span></div>
+                    <div class="cmd-row"><span class="cmd-code">456</span><span class="cmd-desc">HD Voador 🛸</span></div>
+                    <div class="cmd-row cmd-owner"><span class="cmd-code">21120</span><span class="cmd-desc">Martelo 🔨👑</span></div>
+                    <div class="cmd-hint">Pressione <b>C</b> e digite</div>
+                </div>
+            </div>
         <!-- Nome do Jogador -->
         <div id="playerNameContainer">
             <input type="text" id="playerNameInput" placeholder="Digite seu nome..." maxlength="20">
@@ -47,7 +73,7 @@
             <div id="joystick">
                 <div id="joystickKnob"></div>
             </div>
-            <button id="jumpBtnMobile">PULAR</button>
+                <button id="jumpBtnMobile" onclick="window._gameJump && window._gameJump()">PULAR</button>
         </div>
 
         <!-- Atalhos -->
