@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ilha de Capibara - 3D Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Canvas 3D -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD - Interface do Jogo -->
+    <div id="hud">
+        <!-- Nome do Jogador -->
+        <div id="playerNameContainer">
+            <input type="text" id="playerNameInput" placeholder="Digite seu nome..." maxlength="20">
+            <button id="playerNameBtn">Entrar</button>
+        </div>
+
+        <!-- Status -->
+        <div id="statusContainer">
+            <div id="playerName">Capibara Exploradora</div>
+            <div id="statusInfo">
+                <span>Vôo: <span id="flyStatus">OFF</span></span>
+                <span>Transformação: <span id="transformStatus">Normal</span></span>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div id="controlsInfo">
+            <div class="controls-pc">PC: WASD (Mover) | ESPAÇO (Pular) | C (Chat)</div>
+            <div class="controls-mobile" style="display:none;">Toque e arraste para mover</div>
+        </div>
+
+        <!-- Chat e Sistema de Códigos -->
+        <div id="chatContainer">
+            <div id="chatMessages"></div>
+            <div id="chatInput">
+                <input type="text" id="codeInput" placeholder="Digite código ou mensagem..." maxlength="50">
+                <button id="codeBtn">Enviar</button>
+            </div>
+        </div>
+
+        <!-- Joystick Virtual (Mobile) -->
+        <div id="joystickContainer" style="display:none;">
+            <div id="joystick">
+                <div id="joystickKnob"></div>
+            </div>
+            <button id="jumpBtnMobile">PULAR</button>
+        </div>
+
+        <!-- Atalhos -->
+        <div id="shortcuts">
+            <button id="emoteBtn">😂 Emote</button>
+            <button id="flyBtn" style="display:none;">✈️ Voar</button>
+            <button id="mortisBtn">🤸 Mortal</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/npc.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

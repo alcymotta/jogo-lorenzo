@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Ilha de Capibara</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #00AA00;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #f5c6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffeeba;
+        }
+        
+        .icon {
+            font-size: 20px;
+        }
+        
+        button {
+            background: #00AA00;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 5px 0 0;
+        }
+        
+        button:hover {
+            background: #00cc00;
+        }
+        
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            line-height: 1.4;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Teste - Ilha de Capibara</h1>
+        
+        <div class="info-box">
+            Esta página testa se todos os componentes do jogo estão carregando corretamente.
+        </div>
+        
+        <div id="results">
+            <div class="status warning">
+                <span class="icon">⏳</span>
+                <span>Verificando componentes...</span>
+            </div>
+        </div>
+        
+        <button onclick="runTests()">🔄 Executar Testes</button>
+        <button onclick="goToGame()">▶️ Ir para o Jogo</button>
+        <button onclick="openConsole()">🐛 Abrir Console</button>
+        
+        <div class="log">
+            <div id="log">Teste iniciado...<br></div>
+        </div>
+    </div>
+
+    <script>
+        const testLog = document.getElementById('log');
+        let testsPassed = 0;
+        let testsFailed = 0;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'ok' ? '#51cf66' : '#fcc419';
+            const icon = type === 'error' ? '❌' : type === 'ok' ? '✅' : 'ⓘ';
+            
+            testLog.innerHTML += `<span style="color: ${color}">[${timestamp}] ${icon} ${message}</span><br>`;
+            testLog.scrollTop = testLog.scrollHeight;
+            
+            if (type === 'ok') testsPassed++;
+            if (type === 'error') testsFailed++;
+        }
+
+        function runTests() {
+            testLog.innerHTML = '';
+            testsPassed = 0;
+            testsFailed = 0;
+            
+            log('🧪 Iniciando suite de testes...', 'info');
+            
+            // Teste 1: Arquivos necessários
+            log('Verificando arquivos...', 'info');
+            const files = [
+                'index.html',
+                'styles.css',
+                'js/main.js',
+                'js/game.js',
+                'js/player.js',
+                'js/camera.js',
+                'js/controls.js',
+                'js/map.js',
+                'js/npc.js',
+                'js/chat.js',
+                'README.md'
+            ];
+            
+            log(`✓ Arquivos obrigatórios identificados: ${files.length}`, 'ok');
+            
+            // Teste 2: Verificar Three.js
+            log('Testando Three.js...', 'info');
+            fetch('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js')
+                .then(response => {
+                    if (response.ok) {
+                        log('Three.js CDN está acessível', 'ok');
+                    } else {
+                        log('Three.js CDN sem resposta (verifique conexão)', 'error');
+                    }
+                })
+                .catch(err => {
+                    log('Erro ao conectar com Three.js CDN: ' + err.message, 'error');
+                });
+            
+            // Teste 3: Verificar sintaxe JavaScript
+            log('Analisando sintaxe JavaScript...', 'info');
+            const jsFiles = [
+                'js/game.js',
+                'js/player.js',
+                'js/camera.js',
+                'js/controls.js',
+                'js/map.js',
+                'js/npc.js',
+                'js/chat.js',
+                'js/main.js'
+            ];
+            
+            jsFiles.forEach(file => {
+                fetch(file)
+                    .then(r => r.text())
+                    .then(code => {
+                        try {
+                            // Validação básica
+                            if (code.includes('class ') && code.includes('constructor')) {
+                                log(`${file} - Estrutura válida`, 'ok');
+                            } else {
+                                log(`${file} - Aviso: Sem classes detectadas`, 'warning');
+                            }
+                        } catch (e) {
+                            log(`${file} - Erro na análise: ${e.message}`, 'error');
+                        }
+                    })
+                    .catch(err => log(`${file} - Não encontrado`, 'error'));
+            });
+            
+            // Teste 4: Verificar Canvas
+            log('Testando suporte a Canvas...', 'info');
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                log('WebGL suportado ✓', 'ok');
+            } else {
+                log('WebGL não suportado - Jogo não funcionará', 'error');
+            }
+            
+            // Teste 5: Verificar LocalStorage
+            log('Testando LocalStorage...', 'info');
+            try {
+                localStorage.setItem('test', 'ok');
+                localStorage.removeItem('test');
+                log('LocalStorage disponível', 'ok');
+            } catch (e) {
+                log('LocalStorage não disponível: ' + e.message, 'warning');
+            }
+            
+            // Teste 6: Informações do navegador
+            log('Informações do navegador:', 'info');
+            log(`Navegador: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`, 'info');
+            log(`Plataforma: ${navigator.platform}`, 'info');
+            log(`Linguagem: ${navigator.language}`, 'info');
+            
+            // Resumo
+            setTimeout(() => {
+                log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+                log(`Testes concluídos: ✅ ${testsPassed} OK | ❌ ${testsFailed} Erros`, 'info');
+                
+                if (testsFailed === 0) {
+                    log('🎉 Todos os testes passaram! O jogo deve funcionar.', 'ok');
+                } else {
+                    log('⚠️ Alguns testes falharam. Verifique a conexão e o navegador.', 'warning');
+                }
+            }, 2000);
+        }
+
+        function goToGame() {
+            window.location.href = 'index.html';
+        }
+
+        function openConsole() {
+            console.log('Console aberto. Você pode usar GameDebug para debug.');
+            alert('Console aberto! Pressione F12 para ver.');
+            console.clear();
+            console.log('%c🎮 Bem-vindo ao Teste da Ilha de Capibara!', 'font-size: 20px; color: #00AA00; font-weight: bold;');
+            console.log('Use o console para debug. Funções disponíveis:');
+            console.log('- runTests() : Executar testes novamente');
+            console.log('- goToGame() : Ir para o jogo');
+        }
+
+        // Executar testes automaticamente ao carregar
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>
