@@ -59,10 +59,10 @@ class Player {
         this.bodyGroup.position.set(this.position.x, this.position.y, this.position.z);
         this.scene.add(this.bodyGroup);
 
-        const skinMaterial = new THREE.MeshPhongMaterial({ color: 0xFFB347, flatShading: true });
-        const shirtMaterial = new THREE.MeshPhongMaterial({ color: 0xF4A460, flatShading: true });
-        const pantsMaterial = new THREE.MeshPhongMaterial({ color: 0x3A5F8A, flatShading: true });
-        const shoeMaterial = new THREE.MeshPhongMaterial({ color: 0x2E2E2E, flatShading: true });
+        const skinMaterial = new THREE.MeshStandardMaterial({ color: 0xFFB347, roughness: 0.78, metalness: 0.02, flatShading: true });
+        const shirtMaterial = new THREE.MeshStandardMaterial({ color: 0xF4A460, roughness: 0.85, metalness: 0.02, flatShading: true });
+        const pantsMaterial = new THREE.MeshStandardMaterial({ color: 0x3A5F8A, roughness: 0.82, metalness: 0.03, flatShading: true });
+        const shoeMaterial = new THREE.MeshStandardMaterial({ color: 0x2E2E2E, roughness: 0.9, metalness: 0.08, flatShading: true });
 
         // Cabeca (humanoide low-poly)
         const headGeometry = new THREE.BoxGeometry(0.55, 0.6, 0.5);
@@ -75,7 +75,7 @@ class Player {
 
         // Olhos
         const eyeGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.04);
-        const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+        const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.6, metalness: 0.15 });
 
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         leftEye.position.set(-0.13, 0.05, 0.24);
@@ -88,7 +88,7 @@ class Player {
         // Cabelo
         const hair = new THREE.Mesh(
             new THREE.BoxGeometry(0.58, 0.12, 0.52),
-            new THREE.MeshPhongMaterial({ color: 0x3B2A1E, flatShading: true })
+            new THREE.MeshStandardMaterial({ color: 0x3B2A1E, roughness: 0.88, metalness: 0.02, flatShading: true })
         );
         hair.position.set(0, 0.37, 0);
         this.headModel.add(hair);
@@ -106,7 +106,7 @@ class Player {
         // Faixa da camisa para dar mais detalhe visual
         const chestStripe = new THREE.Mesh(
             new THREE.BoxGeometry(0.74, 0.18, 0.44),
-            new THREE.MeshPhongMaterial({ color: 0xE08A4B, flatShading: true })
+            new THREE.MeshStandardMaterial({ color: 0xE08A4B, roughness: 0.84, metalness: 0.02, flatShading: true })
         );
         chestStripe.position.set(0, 0.2, 0.01);
         this.bodyGroup.add(chestStripe);
@@ -170,7 +170,7 @@ class Player {
 
         // Acessorio nas costas (mantem compatibilidade com animacao existente)
         const backpackGeometry = new THREE.BoxGeometry(0.28, 0.4, 0.14);
-        const backpackMaterial = new THREE.MeshPhongMaterial({ color: 0x5A3A2A, flatShading: true });
+        const backpackMaterial = new THREE.MeshStandardMaterial({ color: 0x5A3A2A, roughness: 0.9, metalness: 0.02, flatShading: true });
         this.tailModel = new THREE.Mesh(backpackGeometry, backpackMaterial);
         this.tailModel.position.set(0, 0.04, -0.3);
         this.tailModel.castShadow = true;

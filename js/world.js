@@ -26,8 +26,8 @@ class WorldSystem {
     }
 
     applyAtmosphere() {
-        this.engine.scene.background = new THREE.Color(0x8FD3FF);
-        this.engine.scene.fog = new THREE.Fog(0x99CBEE, 140, 520);
+        this.engine.scene.background = new THREE.Color(0xaed6ff);
+        this.engine.scene.fog = new THREE.Fog(0xaed6ff, 80, 300);
     }
 
     update(delta) {

@@ -89,8 +89,8 @@ class GameEngine {
         this.scene = new THREE.Scene();
 
         // Atmosfera base (detalhada em world.js)
-        this.scene.background = new THREE.Color(0x8FD3FF);
-        this.scene.fog = new THREE.Fog(0x99CBEE, 140, 520);
+        this.scene.background = new THREE.Color(0xaed6ff);
+        this.scene.fog = new THREE.Fog(0xaed6ff, 80, 300);
     }
 
     /**
@@ -132,30 +132,48 @@ class GameEngine {
      * Configurar iluminação
      */
     setupLighting() {
+        // Sky procedural (three/examples)
+        if (THREE.Sky) {
+            const sky = new THREE.Sky();
+            sky.scale.setScalar(450000);
+            this.scene.add(sky);
+
+            const sun = new THREE.Vector3();
+            const skyUniforms = sky.material.uniforms;
+            skyUniforms['turbidity'].value = 10;
+            skyUniforms['rayleigh'].value = 2;
+            skyUniforms['mieCoefficient'].value = 0.005;
+            skyUniforms['mieDirectionalG'].value = 0.8;
+
+            sun.setFromSphericalCoords(1, Math.PI / 3, Math.PI / 4);
+            skyUniforms['sunPosition'].value.copy(sun);
+            this.scene.userData.sunDirection = sun.clone();
+        }
+
         // Luz ambiente
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
         this.scene.add(ambientLight);
 
-        // Luz suave do céu/chão
-        const hemi = new THREE.HemisphereLight(0xb9ecff, 0x6fa45a, 0.45);
-        this.scene.add(hemi);
-        
-        // Luz direcional (sol)
-        const sunLight = new THREE.DirectionalLight(0xfff4d0, 1.1);
-        sunLight.position.set(90, 120, 60);
+        // Luz direcional principal (sol)
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        sunLight.position.set(100, 200, 100);
         sunLight.castShadow = true;
         const shadowSize = this.isMobile ? 1024 : 2048;
         sunLight.shadow.mapSize.width = shadowSize;
         sunLight.shadow.mapSize.height = shadowSize;
-        sunLight.shadow.camera.left = -180;
-        sunLight.shadow.camera.right = 180;
-        sunLight.shadow.camera.top = 180;
-        sunLight.shadow.camera.bottom = -180;
-        sunLight.shadow.camera.near = 0.1;
-        sunLight.shadow.camera.far = 420;
+        sunLight.shadow.camera.left = -220;
+        sunLight.shadow.camera.right = 220;
+        sunLight.shadow.camera.top = 220;
+        sunLight.shadow.camera.bottom = -220;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 500;
         sunLight.shadow.bias = -0.00015;
         sunLight.shadow.normalBias = 0.02;
         this.scene.add(sunLight);
+
+        // Hemisphere leve para suavizar contraste sem pesar
+        const hemi = new THREE.HemisphereLight(0xbde9ff, 0x88b06f, 0.2);
+        this.scene.add(hemi);
     }
 
     /**
@@ -467,13 +485,6 @@ class GameEngine {
     stop() {
         this.isRunning = false;
         if (this.networkSystem) this.networkSystem.disconnect();
-    }
-
-    /**
-     * Parar o jogo
-     */
-    stop() {
-        this.isRunning = false;
     }
 }
 

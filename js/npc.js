@@ -53,8 +53,10 @@ class NPC {
         
         // Corpo (cilindro)
         const bodyGeometry = new THREE.CylinderGeometry(0.8, 0.8, 1.8, 8);
-        const bodyMaterial = new THREE.MeshPhongMaterial({
+        const bodyMaterial = new THREE.MeshStandardMaterial({
             color: 0x8B6F47, // Marrom de capivara
+            roughness: 0.9,
+            metalness: 0.03,
             flatShading: true
         });
         
@@ -76,7 +78,7 @@ class NPC {
         
         // Olhos
         const eyeGeometry = new THREE.SphereGeometry(0.15, 8, 8);
-        const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+        const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.6, metalness: 0.12 });
         
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
         leftEye.position.set(0.85, 1, 0.3);
@@ -88,8 +90,10 @@ class NPC {
         
         // Pernas (cilindros)
         const legGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.8, 8);
-        const legMaterial = new THREE.MeshPhongMaterial({
+        const legMaterial = new THREE.MeshStandardMaterial({
             color: 0x7A5F3F,
+            roughness: 0.9,
+            metalness: 0.02,
             flatShading: true
         });
         
@@ -131,8 +135,10 @@ class NPC {
         
         // Cubo simples
         const geometry = new THREE.BoxGeometry(0.8, 1, 0.6);
-        const material = new THREE.MeshPhongMaterial({
+        const material = new THREE.MeshStandardMaterial({
             color: 0x9932CC, // Roxo para NPCs genéricos
+            roughness: 0.85,
+            metalness: 0.05,
             flatShading: true
         });
         
