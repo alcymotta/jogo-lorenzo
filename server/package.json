@@ -1,0 +1,12 @@
+{
+  "name": "ilha-de-capibara-multiplayer-server",
+  "version": "1.0.0",
+  "description": "Servidor WebSocket para Ilha de Capibara",
+  "main": "multiplayer-server.js",
+  "scripts": {
+    "start": "node multiplayer-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

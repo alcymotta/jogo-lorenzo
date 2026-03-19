@@ -18,6 +18,9 @@ class NPC {
         this.changeDirectionTimer = 0;
         this.changeDirectionInterval = 200 + Math.random() * 200;
         this.targetRotation = 0;
+        this.state = 'walk'; // walk, idle, rest, look, flee
+        this.stateTimer = 0;
+        this.fleeSpeed = 0.085;
         
         // Modelo 3D
         this.model = null;
@@ -145,36 +148,72 @@ class NPC {
     /**
      * Atualizar NPC a cada frame
      */
-    update() {
-        // Comportamento de movimento
+    update(player, delta = 0.016) {
+        this.stateTimer += delta;
+
+        // Detectar jogador correndo perto e fugir.
+        let distanceToPlayer = 999;
+        let playerIsRunningFast = false;
+        if (player) {
+            const dx = player.position.x - this.position.x;
+            const dz = player.position.z - this.position.z;
+            distanceToPlayer = Math.sqrt(dx * dx + dz * dz);
+            playerIsRunningFast = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z) > 0.28;
+
+            if (distanceToPlayer < 16 && playerIsRunningFast) {
+                this.state = 'flee';
+                this.stateTimer = 0;
+                this.targetRotation = Math.atan2(-dx, -dz);
+            } else if (distanceToPlayer < 8 && this.state !== 'flee' && Math.random() < 0.006) {
+                this.state = 'look';
+                this.stateTimer = 0;
+                this.targetRotation = Math.atan2(dx, dz);
+            }
+        }
+
+        if (this.state === 'flee' && this.stateTimer > 2.4) {
+            this.state = 'walk';
+            this.stateTimer = 0;
+        }
+
+        if ((this.state === 'walk' || this.state === 'idle') && this.stateTimer > 2.5) {
+            const roll = Math.random();
+            if (roll < 0.15) this.state = 'rest';
+            else if (roll < 0.38) this.state = 'idle';
+            else this.state = 'walk';
+            this.stateTimer = 0;
+            this.targetRotation = Math.random() * Math.PI * 2;
+        }
+
+        if ((this.state === 'rest' || this.state === 'look') && this.stateTimer > 2.0) {
+            this.state = 'walk';
+            this.stateTimer = 0;
+            this.targetRotation = Math.random() * Math.PI * 2;
+        }
+
         this.changeDirectionTimer++;
-        
-        if (this.changeDirectionTimer > this.changeDirectionInterval) {
-            // Escolher nova direção
+        if (this.changeDirectionTimer > this.changeDirectionInterval && this.state === 'walk') {
             this.targetRotation = Math.random() * Math.PI * 2;
             this.changeDirectionTimer = 0;
             this.changeDirectionInterval = 150 + Math.random() * 300;
         }
-        
+
         // Suavizar rotação
-        const angleDiff = this.targetRotation - this.rotation;
-        if (Math.abs(angleDiff) > 0.01) {
-            this.rotation += angleDiff * 0.05;
-        }
-        
-        // Aplicar movimento
-        this.velocity.x = Math.sin(this.rotation) * this.moveSpeed;
-        this.velocity.z = Math.cos(this.rotation) * this.moveSpeed;
-        
+        let angleDiff = this.targetRotation - this.rotation;
+        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+        this.rotation += angleDiff * 0.08;
+
+        // Velocidade por estado
+        let currentSpeed = 0;
+        if (this.state === 'walk') currentSpeed = this.moveSpeed;
+        if (this.state === 'flee') currentSpeed = this.fleeSpeed;
+
+        this.velocity.x = Math.sin(this.rotation) * currentSpeed;
+        this.velocity.z = Math.cos(this.rotation) * currentSpeed;
+
         this.position.x += this.velocity.x;
         this.position.z += this.velocity.z;
-        
-        // Limpar movimentos aleatórios (ficar parado às vezes)
-        if (Math.random() < 0.02) {
-            this.moveSpeed = 0;
-        } else if (this.moveSpeed < 0.02) {
-            this.moveSpeed = 0.02 + Math.random() * 0.02;
-        }
         
         // Limitar ao mapa
         const mapBounds = 140;
@@ -186,7 +225,13 @@ class NPC {
         // Atualizar modelo
         this.model.position.set(this.position.x, this.position.y, this.position.z);
         this.model.rotation.y = this.rotation;
-        
+
+        // Pose de deitar
+        if (this.bodyParts.body) {
+            const targetBodyZ = this.state === 'rest' ? Math.PI * 0.45 : 0;
+            this.bodyParts.body.rotation.z += (targetBodyZ - this.bodyParts.body.rotation.z) * 0.08;
+        }
+
         // Animar pernas
         this.animateLegs();
         
@@ -202,12 +247,13 @@ class NPC {
      */
     animateLegs() {
         const time = Date.now() * 0.005;
+        const amp = (this.state === 'walk' || this.state === 'flee') ? 0.2 : 0.04;
         
         for (let i = 0; i < 4; i++) {
             const leg = this.bodyParts[`leg${i}`];
             if (leg) {
-                leg.position.y = 0.2 + Math.sin(time + i) * 0.1;
-                leg.rotation.z = Math.sin(time + i) * 0.2;
+                leg.position.y = 0.2 + Math.sin(time + i) * amp * 0.5;
+                leg.rotation.z = Math.sin(time + i) * amp;
             }
         }
     }

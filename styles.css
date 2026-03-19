@@ -603,3 +603,165 @@ body {
             font-size: 10px;
         }
     }
+
+/* ========================
+   HUD EXPANDIDA (UI 10x)
+   ======================== */
+
+#miniMapContainer {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 178px;
+    height: 178px;
+    border-radius: 12px;
+    background: rgba(7, 16, 28, 0.68);
+    border: 1px solid rgba(130, 206, 255, 0.55);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    backdrop-filter: blur(3px);
+    z-index: 120;
+}
+
+#miniMapCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#skinMenu {
+    position: absolute;
+    top: 200px;
+    right: 12px;
+    min-width: 178px;
+    background: rgba(6, 19, 16, 0.66);
+    border: 1px solid rgba(99, 226, 146, 0.45);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 120;
+}
+
+#skinMenu label {
+    color: #8bffc6;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#skinSelect {
+    border: 1px solid rgba(99, 226, 146, 0.45);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #0f1f26;
+}
+
+#emoteBar {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(5, 12, 22, 0.72);
+    border: 1px solid rgba(110, 178, 255, 0.55);
+    border-radius: 999px;
+    padding: 8px;
+    z-index: 130;
+}
+
+#emoteBar button {
+    border: none;
+    border-radius: 999px;
+    background: rgba(77, 145, 245, 0.88);
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+
+#emoteBar button:hover {
+    background: rgba(99, 167, 255, 1);
+    transform: translateY(-1px);
+}
+
+#emoteBar button:active {
+    transform: scale(0.95);
+}
+
+#statusInfo #netStatus[data-state='ONLINE'] {
+    color: #7dff89;
+}
+
+#statusInfo #netStatus[data-state='CONNECTING'] {
+    color: #ffd37a;
+}
+
+#statusInfo #netStatus[data-state='OFFLINE'] {
+    color: #ff8686;
+}
+
+@media (max-width: 980px) {
+    #miniMapContainer {
+        width: 150px;
+        height: 150px;
+    }
+
+    #skinMenu {
+        top: 170px;
+        min-width: 150px;
+    }
+
+    #statusInfo {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    #emoteBar {
+        max-width: 95vw;
+        overflow-x: auto;
+        justify-content: flex-start;
+    }
+}
+
+@media screen and (orientation: landscape) and (max-height: 520px) {
+    #miniMapContainer {
+        width: 128px;
+        height: 128px;
+        top: 8px;
+        right: 8px;
+    }
+
+    #skinMenu {
+        top: 142px;
+        right: 8px;
+        min-width: 128px;
+        padding: 7px;
+    }
+
+    #skinMenu label {
+        font-size: 10px;
+    }
+
+    #skinSelect {
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+
+    #emoteBar {
+        bottom: 6px;
+        padding: 5px;
+        gap: 4px;
+    }
+
+    #emoteBar button {
+        font-size: 9px;
+        padding: 5px 8px;
+    }
+}

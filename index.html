@@ -50,7 +50,26 @@
             <div id="statusInfo">
                 <span>Vôo: <span id="flyStatus">OFF</span></span>
                 <span>Transformação: <span id="transformStatus">Normal</span></span>
+                <span>Online: <span id="onlineCount">1</span></span>
+                <span>Rede: <span id="netStatus">OFFLINE</span></span>
             </div>
+        </div>
+
+        <!-- Mini mapa -->
+        <div id="miniMapContainer">
+            <canvas id="miniMapCanvas" width="170" height="170"></canvas>
+        </div>
+
+        <!-- Menu de skins -->
+        <div id="skinMenu">
+            <label for="skinSelect">Skin</label>
+            <select id="skinSelect">
+                <option value="normal">Normal</option>
+                <option value="capybara">Capivara</option>
+                <option value="nube">Nube</option>
+                <option value="guarda">Guarda</option>
+                <option value="c00lkidd">c00lkidd</option>
+            </select>
         </div>
 
         <!-- Controles -->
@@ -83,17 +102,30 @@
             <button id="flyBtn" style="display:none;">✈️ Voar</button>
             <button id="mortisBtn">🤸 Mortal</button>
         </div>
+
+        <!-- Barra de emotes -->
+        <div id="emoteBar">
+            <button id="emoteLaughBtn">😂 Rir</button>
+            <button id="emoteDanceBtn">🕺 Dançar</button>
+            <button id="emoteWaveBtn">👋 Tchau</button>
+            <button id="emoteSitBtn">🪑 Sentar</button>
+            <button id="emoteMortisBtn">🤸 Mortal</button>
+        </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="js/game.js"></script>
     <script src="js/player.js"></script>
     <script src="js/camera.js"></script>
     <script src="js/controls.js"></script>
     <script src="js/map.js"></script>
     <script src="js/npc.js"></script>
     <script src="js/chat.js"></script>
+    <script src="js/skins.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/network.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/game.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

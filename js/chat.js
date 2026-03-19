@@ -55,17 +55,8 @@ class ChatSystem {
      * Configurar interface do chat
      */
     setupChatUI() {
-        const chatMessages = document.getElementById('chatMessages');
-        const codeInput = document.getElementById('codeInput');
-        const codeBtn = document.getElementById('codeBtn');
-        
-        // Event listeners (já setup no game.js, mas adicionando backup)
-        codeBtn.addEventListener('click', () => this.sendCode());
-        codeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendCode();
-            }
-        });
+        // Mantido para compatibilidade: os eventos de envio sao ligados em game.js.
+        // Aqui fica apenas um ponto de extensao da UI de chat.
     }
 
     /**
@@ -128,6 +119,13 @@ class ChatSystem {
      * Processar código especial ou mensagem normal
      */
     processCode(code) {
+        // Comandos de chat (/ban nome)
+        if (code.startsWith('/ban ')) {
+            const target = code.slice(5).trim();
+            if (target) this.banPlayer(target);
+            return;
+        }
+
         // Verificar se é um código conhecido
         if (this.codes[code]) {
             const codeInfo = this.codes[code];
@@ -140,6 +138,7 @@ class ChatSystem {
             if (this.engine && this.engine.player) {
                 const playerName = this.engine.player.playerName;
                 this.addMessage(`${playerName}: ${code}`);
+                if (this.engine.networkSystem) this.engine.networkSystem.sendChat(code);
             }
         }
     }
@@ -151,6 +150,7 @@ class ChatSystem {
         if (!this.engine || !this.engine.player) return;
         
         this.engine.player.transform(transformType);
+        if (this.engine.networkSystem) this.engine.networkSystem.sendTransform(transformType);
         
         // Atualizar status
         const transformStatus = document.getElementById('transformStatus');

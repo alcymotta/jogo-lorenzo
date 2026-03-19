@@ -13,10 +13,18 @@ let isGameRunning = false;
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 Iniciando Ilha de Capibara...');
+
+    // Permite setar servidor multiplayer por URL: ?ws=ws://localhost:2567
+    const wsFromQuery = new URLSearchParams(window.location.search).get('ws');
+    if (wsFromQuery) {
+        localStorage.setItem('capybara_ws_url', wsFromQuery);
+        console.log('🌐 Servidor multiplayer configurado:', wsFromQuery);
+    }
     
     try {
         // Criar engine do jogo
         gameEngine = new GameEngine();
+        window.gameEngine = gameEngine;
         isGameRunning = true;
         
         // Setup inicial
@@ -282,5 +290,7 @@ console.log('GameDebug.fly(true/false) - Voar');
 console.log('GameDebug.playerInfo() - Info do jogador');
 console.log('GameDebug.message("text") - Mensagem chat');
 
-// Exportar para console
-window.gameEngine = gameEngine;
+GameDebug.setServer = (url) => {
+    localStorage.setItem('capybara_ws_url', url);
+    console.log('🌐 Servidor multiplayer salvo:', url);
+};

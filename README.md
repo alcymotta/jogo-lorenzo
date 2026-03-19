@@ -4,6 +4,23 @@ Um jogo 3D imersivo construído com **Three.js** que roda diretamente no navegad
 
 ## 🎮 Características
 
+## 🚀 Atualização 10x (Sandbox Evoluído)
+
+O projeto foi evoluído sem reescrever do zero, mantendo chat, códigos, transformações, voo, martelo de banimento e compatibilidade com GitHub Pages.
+
+### Novos sistemas adicionados
+
+- **World System** (`js/world.js`): camada de ambiente e qualidade (desktop/mobile)
+- **Mapa evoluído** (`js/map.js`): ilha central, praia, floresta, montanha, lago grande, caverna secreta, casa na árvore, ponte e ilha pequena
+- **Visual avançado**: sky dome com shader, água com shader animado, fog atmosférica, iluminação mais rica
+- **Skin System** (`js/skins.js`): pipeline de skins com `player.skin` e aplicação por configuração
+- **UI System** (`js/ui.js`): mini mapa, contador de online, estado de rede, menu de skins e barra de emotes
+- **Network System** (`js/network.js`): multiplayer opcional via WebSocket com fallback offline
+- **Servidor multiplayer** (`server/multiplayer-server.js`): sala inicial com limite de 20 jogadores
+- **NPC capivara melhorada** (`js/npc.js`): estados de andar/parar/deitar/olhar/fugir
+- **Emotes melhorados**: dança, tchau e sentar (além do mortal já existente)
+- **Performance**: instanced meshes para vegetação, ajustes de sombra e pixel ratio por perfil
+
 ✨ **Gráficos 3D Low-Poly** em estilo cartoon
 🐹 **NPCs Animados** (capivaras andando pelo mapa)
 🗺️ **Mapa Expansivo** com lago, árvores, montanhas e mais
@@ -51,6 +68,53 @@ cd "Jogo Lorenzo"
 php -S localhost:8000
 # Abra http://localhost:8000 no navegador
 ```
+
+## 🌐 Multiplayer (Opcional)
+
+O jogo continua funcionando totalmente offline/singleplayer no GitHub Pages.
+Para multiplayer, rode o servidor WebSocket separado:
+
+```bash
+cd server
+npm install
+npm start
+```
+
+Servidor padrão:
+
+```bash
+ws://localhost:2567
+```
+
+Para conectar o cliente web:
+
+1. Abra o jogo com query string:
+
+```bash
+http://localhost:8000/?ws=ws://localhost:2567
+```
+
+2. Ou defina pelo console:
+
+```javascript
+GameDebug.setServer('ws://localhost:2567')
+```
+
+3. Recarregue a página.
+
+### Protocolo multiplayer atual
+
+- `join`: entrada do jogador
+- `snapshot`: lista inicial de jogadores
+- `player_join` / `player_leave`
+- `state`: sincronização de posição/rotação
+- `player_state`: atualização remota
+- `transform` / `player_transform`
+- `chat`: chat global
+
+### Limite inicial
+
+- Até **20 jogadores** por sala.
 
 ## 🎮 Controles
 
@@ -105,6 +169,13 @@ Jogo Lorenzo/
 │   ├── map.js             # Geração do mapa e elementos
 │   ├── npc.js             # NPCs e capivaras animadas
 │   └── chat.js            # Sistema de chat e códigos
+│   ├── skins.js           # Sistema de skins (novo)
+│   ├── ui.js              # HUD avançada/minimapa (novo)
+│   ├── network.js         # Cliente multiplayer opcional (novo)
+│   └── world.js           # Sistema de ambiente/mundo (novo)
+├── server/
+│   ├── package.json       # Dependências do servidor multiplayer
+│   └── multiplayer-server.js
 └── README.md              # Este arquivo
 ```
 

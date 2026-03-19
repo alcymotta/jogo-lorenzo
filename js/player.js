@@ -22,11 +22,14 @@ class Player {
         this.isMortiing = false;
         this.isRunning = false;
         this.currentTransform = 'normal'; // normal, nube, c00lkidd, capybara, guarda
+        this.skinId = 'normal';
         this.moveSpeed = 0.25;       // aumentado de 0.15
         this.runMultiplier = 1.8;    // Shift = correr
         this.jumpForce = 0.50;       // aumentado de 0.35
         this.flySpeed = 0.28;
         this.deceleration = 0.80;    // fator de desaceleração (0-1, menor = mais deslizamento)
+        this.activeEmote = null;
+        this.emoteEndAt = 0;
         
         // Modelos 3D
         this.bodyGroup = null;
@@ -35,6 +38,8 @@ class Player {
         this.armsModel = [];
         this.legsModel = [];
         this.tailModel = null;
+        this.hairModel = null;
+        this.chestStripeModel = null;
         
         // Referências
         this.engine = null;
@@ -87,6 +92,7 @@ class Player {
         );
         hair.position.set(0, 0.37, 0);
         this.headModel.add(hair);
+        this.hairModel = hair;
 
         // Corpo (tronco)
         const bodyGeometry = new THREE.BoxGeometry(0.72, 0.9, 0.42);
@@ -104,6 +110,7 @@ class Player {
         );
         chestStripe.position.set(0, 0.2, 0.01);
         this.bodyGroup.add(chestStripe);
+        this.chestStripeModel = chestStripe;
 
         // Bracos
         const armGeometry = new THREE.CylinderGeometry(0.11, 0.11, 0.75, 8);
@@ -196,6 +203,44 @@ class Player {
         
         // Animar cauda
         this.animateTail();
+
+        // Animar emotes extras
+        this.animateEmote();
+    }
+
+    /**
+     * Aplicar skin (cores + escala) ao personagem.
+     */
+    applySkinConfig(skin) {
+        if (!skin || !skin.colors) return;
+
+        this.skinId = skin.id || 'normal';
+        this.currentTransform = this.skinId;
+
+        const colors = skin.colors;
+        const setColor = (mesh, hex) => {
+            if (mesh && mesh.material && typeof hex === 'number') {
+                mesh.material.color.setHex(hex);
+            }
+        };
+
+        setColor(this.headModel, colors.skin);
+        setColor(this.bodyModel, colors.shirt);
+        setColor(this.hairModel, colors.hair);
+        setColor(this.tailModel, colors.accessory);
+
+        this.armsModel.forEach((arm) => setColor(arm, colors.skin));
+        this.legsModel.forEach((leg) => setColor(leg, colors.pants));
+
+        if (this.chestStripeModel && this.chestStripeModel.material && typeof colors.shirt === 'number') {
+            const stripeColor = new THREE.Color(colors.shirt);
+            stripeColor.offsetHSL(0, 0.05, 0.08);
+            this.chestStripeModel.material.color.copy(stripeColor);
+        }
+
+        if (skin.scale) {
+            this.bodyGroup.scale.set(skin.scale.x, skin.scale.y, skin.scale.z);
+        }
     }
 
     /**
@@ -310,6 +355,24 @@ class Player {
                     this.headModel.scale.set(1, 1, 1);
                 }, 500);
                 break;
+
+            case 'dance':
+                this.activeEmote = 'dance';
+                this.emoteEndAt = Date.now() + 2200;
+                this.engine?.chatSystem?.addMessage('🕺 Danca ativada!', 'system');
+                break;
+
+            case 'wave':
+                this.activeEmote = 'wave';
+                this.emoteEndAt = Date.now() + 1500;
+                this.engine?.chatSystem?.addMessage('👋 Tchauzinho!', 'system');
+                break;
+
+            case 'sit':
+                this.activeEmote = 'sit';
+                this.emoteEndAt = Date.now() + 3000;
+                this.engine?.chatSystem?.addMessage('🪑 Sentando...', 'system');
+                break;
                 
             case 'mortis':
                 // Simular flip (rotação)
@@ -330,57 +393,69 @@ class Player {
         }
     }
 
+    animateEmote() {
+        if (!this.activeEmote) return;
+
+        const now = Date.now();
+        if (now > this.emoteEndAt) {
+            this.activeEmote = null;
+            this.armsModel.forEach((arm) => {
+                arm.rotation.x = 0;
+                arm.rotation.y = 0;
+            });
+            this.legsModel.forEach((leg) => {
+                leg.rotation.x = 0;
+            });
+            this.bodyModel.position.y = 0.05;
+            return;
+        }
+
+        const t = now * 0.01;
+
+        if (this.activeEmote === 'dance') {
+            this.bodyModel.position.y = 0.05 + Math.sin(t * 0.5) * 0.05;
+            this.armsModel[0].rotation.x = Math.sin(t) * 1.1;
+            this.armsModel[1].rotation.x = Math.cos(t) * 1.1;
+            this.armsModel[0].rotation.y = Math.cos(t * 0.8) * 0.25;
+            this.armsModel[1].rotation.y = -Math.cos(t * 0.8) * 0.25;
+        }
+
+        if (this.activeEmote === 'wave') {
+            this.armsModel[1].rotation.x = -0.8 + Math.sin(t * 1.9) * 0.8;
+            this.armsModel[1].rotation.y = -0.3;
+            this.armsModel[0].rotation.x = 0.2;
+        }
+
+        if (this.activeEmote === 'sit') {
+            this.bodyModel.position.y = -0.1;
+            this.legsModel[0].rotation.x = -1.25;
+            this.legsModel[1].rotation.x = -1.25;
+            this.armsModel[0].rotation.x = -0.25;
+            this.armsModel[1].rotation.x = -0.25;
+        }
+    }
+
     /**
      * Transformar em outro personagem/forma
      */
     transform(transformType) {
-        // Guardar transformação anterior
-        const previousTransform = this.currentTransform;
-        this.currentTransform = transformType;
-        
-        // Mudar cores/tamanhos baseado no tipo
-        switch(transformType) {
-            case 'nube':
-                this.headModel.material.color.setHex(0xFFFFFF); // Branco
-                this.bodyModel.material.color.setHex(0xFFFFFF);
-                this.bodyGroup.scale.set(1.2, 1.2, 1.2);
-                console.log('☁️ Você é Nube agora! Flutuante!');
-                this.engine?.chatSystem?.addMessage('☁️ Transformado em: Nube', 'system');
-                break;
-                
-            case 'c00lkidd':
-                this.headModel.material.color.setHex(0xFF1493); // Rosa
-                this.bodyModel.material.color.setHex(0xFF1493);
-                this.bodyGroup.scale.set(0.9, 1.1, 0.9);
-                console.log('😎 Você é c00lkidd! Chique!');
-                this.engine?.chatSystem?.addMessage('😎 Transformado em: c00lkidd', 'system');
-                break;
-                
-            case 'capybara':
-                this.headModel.material.color.setHex(0x8B4513); // Marrom
-                this.bodyModel.material.color.setHex(0x8B4513);
-                this.bodyGroup.scale.set(1.5, 0.8, 1.5); // Mais larga
-                console.log('🐹 Você é uma Capivara!');
-                this.engine?.chatSystem?.addMessage('🐹 Transformado em: Capivara', 'system');
-                break;
-                
-            case 'guarda':
-                this.headModel.material.color.setHex(0x1E90FF); // Azul
-                this.bodyModel.material.color.setHex(0x000080); // Azul escuro
-                this.bodyGroup.scale.set(1.1, 1.3, 1.1); // Mais alta
-                console.log('👮 Você é um Guarda! Certero!');
-                this.engine?.chatSystem?.addMessage('👮 Transformado em: Guarda', 'system');
-                break;
-                
-            default:
-                // Voltar ao normal
-                this.headModel.material.color.setHex(0xFFB347);
-                this.bodyModel.material.color.setHex(0xF4A460);
-                this.bodyGroup.scale.set(1, 1, 1);
-                this.currentTransform = 'normal';
-                console.log('✨ Voltou ao normal!');
-                this.engine?.chatSystem?.addMessage('✨ Transformação cancelada', 'system');
+        const targetSkin = transformType || 'normal';
+
+        if (this.engine && this.engine.skinSystem) {
+            this.engine.skinSystem.applySkinToPlayer(this, targetSkin);
+        } else {
+            this.currentTransform = targetSkin;
         }
+
+        const label = {
+            normal: 'Normal',
+            nube: 'Nube',
+            c00lkidd: 'c00lkidd',
+            capybara: 'Capivara',
+            guarda: 'Guarda'
+        }[targetSkin] || targetSkin;
+
+        this.engine?.chatSystem?.addMessage('✨ Transformado em: ' + label, 'system');
     }
 
     /**

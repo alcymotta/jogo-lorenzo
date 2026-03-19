@@ -14,7 +14,12 @@ class GameEngine {
         this.map = null;
         this.npcs = [];
         this.chatSystem = null;
+        this.skinSystem = null;
+        this.uiSystem = null;
+        this.networkSystem = null;
+        this.worldSystem = null;
         this.isRunning = false;
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         // Configurações do jogo
         this.gravity = -0.025;       // levemente maior para pulo mais sólido
@@ -33,14 +38,18 @@ class GameEngine {
         this.setupCamera();
         this.setupLighting();
         this.setupPhysics();
-        
-        // Criar mapa
-        this.map = new MapGenerator(this.scene);
-        this.map.generate();
+
+        // Sistemas modulares
+        this.skinSystem = new SkinSystem(this);
+        this.worldSystem = new WorldSystem(this);
+        this.worldSystem.build();
+        this.map = this.worldSystem.map;
         
         // Criar jogador
-        this.player = new Player(this.scene, { x: 0, y: 2, z: 0 });
+        const spawn = this.map && this.map.getSpawnPoint ? this.map.getSpawnPoint() : { x: 0, y: 2, z: 0 };
+        this.player = new Player(this.scene, spawn);
         this.player.engine = this;
+        this.skinSystem.applySkinToPlayer(this.player, 'normal');
         
         // Configurar câmera em terceira pessoa
         this.gameCamera = new ThirdPersonCamera(this.camera, this.player);
@@ -52,6 +61,13 @@ class GameEngine {
         // Configurar chat e sistema de códigos
         this.chatSystem = new ChatSystem();
         this.chatSystem.engine = this;
+
+        // HUD estendida
+        this.uiSystem = new UISystem(this);
+        this.uiSystem.init();
+
+        // Rede multiplayer (opcional)
+        this.networkSystem = new NetworkSystem(this);
         
         // Gerar NPCs
         this.spawnNPCs();
@@ -71,15 +87,10 @@ class GameEngine {
      */
     setupScene() {
         this.scene = new THREE.Scene();
-        
-        // Azul céu como fundo
-        this.scene.background = new THREE.Color(0x87CEEB);
-        
-        // Névoa
-        this.scene.fog = new THREE.Fog(0x87CEEB, 200, 500);
-        
-        // Plano de renderização
-        this.scene.add(new THREE.AxesHelper(10));
+
+        // Atmosfera base (detalhada em world.js)
+        this.scene.background = new THREE.Color(0x8FD3FF);
+        this.scene.fog = new THREE.Fog(0x99CBEE, 140, 520);
     }
 
     /**
@@ -89,14 +100,16 @@ class GameEngine {
         const canvas = document.getElementById('gameCanvas');
         this.renderer = new THREE.WebGLRenderer({ 
             canvas: canvas, 
-            antialias: true,
+            antialias: !this.isMobile,
             alpha: false
         });
         
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, this.isMobile ? 1.25 : 1.8));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
         
         // Responsivo
         window.addEventListener('resize', () => this.onWindowResize());
@@ -120,26 +133,29 @@ class GameEngine {
      */
     setupLighting() {
         // Luz ambiente
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
         this.scene.add(ambientLight);
+
+        // Luz suave do céu/chão
+        const hemi = new THREE.HemisphereLight(0xb9ecff, 0x6fa45a, 0.45);
+        this.scene.add(hemi);
         
         // Luz direcional (sol)
-        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        sunLight.position.set(100, 100, 50);
+        const sunLight = new THREE.DirectionalLight(0xfff4d0, 1.1);
+        sunLight.position.set(90, 120, 60);
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.left = -200;
-        sunLight.shadow.camera.right = 200;
-        sunLight.shadow.camera.top = 200;
-        sunLight.shadow.camera.bottom = -200;
+        const shadowSize = this.isMobile ? 1024 : 2048;
+        sunLight.shadow.mapSize.width = shadowSize;
+        sunLight.shadow.mapSize.height = shadowSize;
+        sunLight.shadow.camera.left = -180;
+        sunLight.shadow.camera.right = 180;
+        sunLight.shadow.camera.top = 180;
+        sunLight.shadow.camera.bottom = -180;
         sunLight.shadow.camera.near = 0.1;
-        sunLight.shadow.camera.far = 500;
+        sunLight.shadow.camera.far = 420;
+        sunLight.shadow.bias = -0.00015;
+        sunLight.shadow.normalBias = 0.02;
         this.scene.add(sunLight);
-        
-        // Luz ambiente azul (reflexo do céu)
-        const skyLight = new THREE.HemisphereLight(0x87CEEB, 0x00aa00, 0.3);
-        this.scene.add(skyLight);
     }
 
     /**
@@ -154,13 +170,15 @@ class GameEngine {
      * Gerar NPCs e capivaras no mapa
      */
     spawnNPCs() {
-        const npcPositions = [
-            { x: -30, z: 30, type: 'capybara' },
-            { x: 30, z: -20, type: 'capybara' },
-            { x: -50, z: 0, type: 'capybara' },
-            { x: 40, z: 40, type: 'capybara' },
-            { x: 0, z: 50, type: 'capybara' }
-        ];
+        const npcPositions = (this.map && this.map.getCapybaraSpawnPoints)
+            ? this.map.getCapybaraSpawnPoints(this.isMobile ? 5 : 8)
+            : [
+                { x: -30, z: 30, type: 'capybara' },
+                { x: 30, z: -20, type: 'capybara' },
+                { x: -50, z: 0, type: 'capybara' },
+                { x: 40, z: 40, type: 'capybara' },
+                { x: 0, z: 50, type: 'capybara' }
+            ];
         
         npcPositions.forEach(pos => {
             const npc = new NPC(this.scene, {
@@ -197,6 +215,10 @@ class GameEngine {
         
         document.getElementById('mortisBtn').addEventListener('click', () => {
             this.player.playEmote('mortis');
+        });
+
+        document.getElementById('flyBtn').addEventListener('click', () => {
+            this.toggleFly(!this.player.isFlying);
         });
         
         // Mobile
@@ -304,6 +326,8 @@ class GameEngine {
             document.getElementById('playerNameContainer').classList.add('hidden');
             input.blur();
             this.chatSystem.addMessage(`${name} entrou no jogo!`, 'system');
+
+            if (this.networkSystem) this.networkSystem.connect(name);
         } else {
             alert('Digite um nome válido!');
         }
@@ -326,13 +350,34 @@ class GameEngine {
         this.updatePhysics(delta);
 
         // Atualizar jogador
+        const prevX = this.player.position.x;
+        const prevZ = this.player.position.z;
         this.player.update();
+
+        // Colisao simples com obstaculos do mapa
+        if (this.map && this.map.checkCollision && this.map.checkCollision(this.player.position, 0.85)) {
+            this.player.position.x = prevX;
+            this.player.position.z = prevZ;
+            this.player.velocity.x = 0;
+            this.player.velocity.z = 0;
+            this.player.bodyGroup.position.x = prevX;
+            this.player.bodyGroup.position.z = prevZ;
+        }
+
+        // Atualizar mundo dinâmico
+        if (this.worldSystem) this.worldSystem.update(delta);
 
         // Atualizar câmera
         this.gameCamera.update();
 
         // Atualizar NPCs
-        this.npcs.forEach(npc => npc.update());
+        this.npcs.forEach(npc => npc.update(this.player, delta));
+
+        // Multiplayer
+        if (this.networkSystem) this.networkSystem.update(delta);
+
+        // HUD estendida
+        if (this.uiSystem) this.uiSystem.update(delta);
 
         // Renderizar
         this.renderer.render(this.scene, this.camera);
@@ -417,6 +462,11 @@ class GameEngine {
         this.camera.updateProjectionMatrix();
         
         this.renderer.setSize(width, height);
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.networkSystem) this.networkSystem.disconnect();
     }
 
     /**
